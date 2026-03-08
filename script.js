@@ -1,251 +1,160 @@
-/**
- * script.js — Invitation experience controller
- *
- * State machine (simple):
- *   CLOSED  → (envelope click) → OPENING  → (animationend) → OPEN
- *
- * In the OPEN state the user can flip the card and toggle music.
- *
- * ── To allow replay of the opening animation ──────────────────────────
- * Add a "Replay" button (hidden by default) that calls resetExperience().
- * That function removes .is-open from the scene, re-shows the envelope
- * wrapper, and hides the card-scene again. Uncomment the replay section
- * at the bottom of this file for a ready-made example.
- * ─────────────────────────────────────────────────────────────────────
- */
-
 'use strict';
 
-/* ─── Element references ───────────────────────────────────────────── */
-const scene           = document.getElementById('scene');
-const envelopeWrapper = document.getElementById('envelope-wrapper');
-const envelopeFlap    = document.getElementById('envelope-flap');
-const cardScene       = document.getElementById('card-scene');
-const card            = document.getElementById('card');
-const flipBtn         = document.getElementById('flip-btn');
-const muteBtn         = document.getElementById('mute-btn');
-const audio           = document.getElementById('bg-music');
-
-/* ─── Application state ────────────────────────────────────────────── */
-let appState       = 'CLOSED';   // 'CLOSED' | 'OPENING' | 'OPEN'
-let musicDeferred  = false;       // true when autoplay was blocked; play on next interaction
-
-/* ─── Timing constants (keep in sync with CSS --dur-open) ──────────── */
-// Total time before we reveal the card after the envelope click.
-// Should be >= CSS --dur-open value (1000ms) so animations don't overlap.
-const OPEN_ANIM_MS = 1000;
+/* ═══════════════════════════════════════════════════════
+   ELEMENT REFERENCES
+═══════════════════════════════════════════════════════ */
+const scene         = document.getElementById('scene');
+const envStage      = document.getElementById('envelope-stage');
+const env           = document.getElementById('env');
+const envFlap       = document.getElementById('env-flap');
+const envSeal       = document.getElementById('env-seal');
+const envSealDisc   = document.getElementById('env-seal-disc');
+const envLetter     = document.getElementById('env-letter');
+const sparks        = document.getElementById('sparks');
+const cardScene     = document.getElementById('card-scene');
+const card          = document.getElementById('card');
+const flipBtn       = document.getElementById('flip-btn');
+const muteBtn       = document.getElementById('mute-btn');
+const audio         = document.getElementById('bg-music');
 
 
-/* =================================================================
-   ENVELOPE CLICK → open sequence
-================================================================= */
-envelopeWrapper.addEventListener('click', openInvitation);
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+let appState      = 'CLOSED';   // 'CLOSED' | 'OPENING' | 'OPEN'
+let musicDeferred = false;
+let isFlipped     = false;
+
+
+/* ═══════════════════════════════════════════════════════
+   GRAND OPENING SEQUENCE
+   ───────────────────────────────────────────────────────
+   Timeline (ms):
+     0       Click registered
+     0       Phase 1 — seal cracks & pops + gold sparks
+     350     Phase 2 — flap begins its 2-second rotation
+     380     Phase 3 — golden inside lining fades in
+     1 600   Phase 4 — letter rises out of the envelope
+     2 400   Phase 5 — envelope stage fades out (.is-open)
+     2 550   Phase 6 — card scene becomes visible
+     2 650   Phase 7 — card animates in (.card-visible)
+     2 900   Phase 8 — music starts, state = OPEN
+═══════════════════════════════════════════════════════ */
+envStage.addEventListener('click', openInvitation);
+envStage.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openInvitation(); }
+});
 
 function openInvitation() {
-  if (appState !== 'CLOSED') return;   // guard: run once
+  if (appState !== 'CLOSED') return;
   appState = 'OPENING';
 
-  /* 1. Trigger the flap rotation immediately */
-  envelopeFlap.classList.add('is-opening');
+  /* ── Phase 1 : Seal pop + gold sparks (t = 0) ──── */
+  envSeal.classList.add('is-popping');
+  sparks.classList.add('is-active');
 
-  /* 2. Add .is-open to the scene after a short pause (let the flap
-        lift slightly before the full open transition fires). */
+  // After pop animation finishes, permanently hide the disc
+  setTimeout(() => {
+    envSeal.classList.remove('is-popping');
+    envSeal.classList.add('is-popped');
+  }, 450);
+
+  /* ── Phase 2 : Flap lifts (t = 350 ms) ─────────── */
+  setTimeout(() => {
+    envFlap.classList.add('is-opening');
+  }, 350);
+
+  /* ── Phase 3 : Inside lining (t = 380 ms) ──────── */
+  setTimeout(() => {
+    env.classList.add('is-opening');
+  }, 380);
+
+  /* ── Phase 4 : Letter rises (t = 1 600 ms) ─────── */
+  // The flap CSS transition is 2 000 ms. At ~80% of 2 000 = 1 600 ms
+  // the flap has rotated ~90° and the inside is fully revealed.
+  setTimeout(() => {
+    envLetter.classList.add('is-rising');
+  }, 1600);
+
+  /* ── Phase 5 : Envelope exits (t = 2 400 ms) ───── */
   setTimeout(() => {
     scene.classList.add('is-open');
-  }, 80);   // tiny delay makes the sequence feel sequential, not instant
+  }, 2400);
 
-  /* 3. After the opening animation completes, reveal the card */
-  setTimeout(revealCard, OPEN_ANIM_MS + 80);
-}
+  /* ── Phase 6 : Card DOM visible (t = 2 550 ms) ─── */
+  setTimeout(() => {
+    cardScene.removeAttribute('hidden');
+  }, 2550);
 
-
-/* =================================================================
-   REVEAL CARD
-================================================================= */
-function revealCard() {
-  appState = 'OPEN';
-
-  /* Show the card-scene element (was HTML hidden) */
-  cardScene.removeAttribute('hidden');
-
-  /* requestAnimationFrame ensures the browser paints the element
-     before we add the class that drives the CSS entrance transition.
-     Without this double-rAF trick the transition may not fire. */
-  requestAnimationFrame(() => {
+  /* ── Phase 7 : Card entrance animation (t = 2 650 ms) */
+  setTimeout(() => {
     requestAnimationFrame(() => {
-      cardScene.classList.add('card-visible');
+      requestAnimationFrame(() => {
+        cardScene.classList.add('card-visible');
+      });
     });
-  });
+  }, 2650);
 
-  /* Show the mute button now that music is relevant */
-  muteBtn.classList.add('visible');
-
-  /* Attempt to start music (browsers may block autoplay) */
-  attemptPlay();
+  /* ── Phase 8 : Finalise (t = 2 900 ms) ─────────── */
+  setTimeout(() => {
+    appState = 'OPEN';
+    muteBtn.classList.add('visible');
+    attemptPlay();
+  }, 2900);
 }
 
 
-/* =================================================================
-   MUSIC / AUDIO
-================================================================= */
-
-/**
- * Attempt to auto-play. If the browser rejects it (common on mobile
- * and in some desktop Chrome policies), we flag musicDeferred = true
- * and attach a one-time listener to play on the very next user
- * interaction with any element.
- */
+/* ═══════════════════════════════════════════════════════
+   MUSIC
+═══════════════════════════════════════════════════════ */
 function attemptPlay() {
-  const playPromise = audio.play();
-
-  if (playPromise !== undefined) {
-    playPromise.catch(() => {
-      // Autoplay blocked — queue music for the next user interaction
+  const p = audio.play();
+  if (p !== undefined) {
+    p.catch(() => {
       musicDeferred = true;
-      document.addEventListener('click',  playDeferredMusic, { once: true });
-      document.addEventListener('touchend', playDeferredMusic, { once: true });
+      document.addEventListener('click',    playDeferred, { once: true });
+      document.addEventListener('touchend', playDeferred, { once: true });
     });
   }
 }
 
-function playDeferredMusic() {
+function playDeferred() {
   if (!musicDeferred) return;
   musicDeferred = false;
-  // Only play if the user hasn't actively muted
-  if (!audio.muted) {
-    audio.play().catch(() => {
-      // Still blocked — silently ignore
-    });
-  }
+  if (!audio.muted) audio.play().catch(() => {});
 }
 
-/* ── Mute toggle ──────────────────────────────────────────────────── */
-muteBtn.addEventListener('click', toggleMute);
-
-function toggleMute() {
+muteBtn.addEventListener('click', () => {
   audio.muted = !audio.muted;
-  syncMuteButton();
-
-  /* If music was deferred and the user unmutes, try starting it now */
+  syncMute();
   if (!audio.muted && musicDeferred) {
     musicDeferred = false;
     audio.play().catch(() => {});
   }
+});
+
+function syncMute() {
+  const m = audio.muted;
+  muteBtn.classList.toggle('is-muted', m);
+  muteBtn.setAttribute('aria-label', m ? 'Unmute music' : 'Mute music');
+  muteBtn.setAttribute('title',       m ? 'Unmute music' : 'Mute music');
 }
-
-/**
- * Keep the button icon in sync with the actual audio.muted state.
- * This is also safe to call proactively (e.g., if the system mutes).
- */
-function syncMuteButton() {
-  if (audio.muted) {
-    muteBtn.classList.add('is-muted');
-    muteBtn.setAttribute('aria-label', 'Unmute music');
-    muteBtn.setAttribute('title', 'Unmute music');
-  } else {
-    muteBtn.classList.remove('is-muted');
-    muteBtn.setAttribute('aria-label', 'Mute music');
-    muteBtn.setAttribute('title', 'Mute music');
-  }
-}
-
-/* Sync on page load in case the browser or OS starts in a muted state */
-audio.addEventListener('volumechange', syncMuteButton);
+audio.addEventListener('volumechange', syncMute);
 
 
-/* =================================================================
+/* ═══════════════════════════════════════════════════════
    CARD FLIP
-================================================================= */
-
-/* Flip when the button is clicked */
+═══════════════════════════════════════════════════════ */
 flipBtn.addEventListener('click', flipCard);
-
-/* Also flip when the card itself is tapped/clicked (mobile-friendly) */
 card.addEventListener('click', flipCard);
-
-/* Track which face is showing so we can update aria labels */
-let isFlipped = false;
+card.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flipCard(); }
+});
 
 function flipCard() {
   isFlipped = !isFlipped;
   card.classList.toggle('is-flipped', isFlipped);
-
-  /* Update button label for accessibility */
-  flipBtn.setAttribute(
-    'aria-label',
-    isFlipped ? 'Flip to front of invitation' : 'Flip to back of invitation'
-  );
-  flipBtn.querySelector('span').textContent =
-    isFlipped ? 'See front' : 'Flip card';
+  const label = isFlipped ? 'Flip to front' : 'Flip to back';
+  flipBtn.setAttribute('aria-label', label);
+  flipBtn.querySelector('span').textContent = isFlipped ? 'See front' : 'Flip card';
 }
-
-
-/* =================================================================
-   KEYBOARD ACCESSIBILITY
-================================================================= */
-envelopeWrapper.setAttribute('tabindex', '0');
-envelopeWrapper.setAttribute('role', 'button');
-envelopeWrapper.setAttribute('aria-label', 'Open your invitation');
-
-envelopeWrapper.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault();
-    openInvitation();
-  }
-});
-
-card.setAttribute('tabindex', '0');
-card.setAttribute('role', 'button');
-card.setAttribute('aria-label', 'Flip invitation card');
-
-card.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault();
-    flipCard();
-  }
-});
-
-
-/* =================================================================
-   OPTIONAL REPLAY
-   ─────────────────────────────────────────────────────────────────
-   To enable replay, add this button to your HTML inside .scene:
-     <button id="replay-btn" class="replay-btn" hidden>
-       Watch again
-     </button>
-   Then uncomment the block below.
-================================================================= */
-
-/*
-const replayBtn = document.getElementById('replay-btn');
-
-function resetExperience() {
-  appState = 'CLOSED';
-  isFlipped = false;
-
-  // Reset card flip
-  card.classList.remove('is-flipped');
-
-  // Hide card scene
-  cardScene.classList.remove('card-visible');
-  setTimeout(() => {
-    cardScene.setAttribute('hidden', '');
-  }, 600); // wait for fade-out
-
-  // Reset envelope
-  envelopeFlap.classList.remove('is-opening');
-  scene.classList.remove('is-open');
-
-  // Hide mute button and stop music
-  muteBtn.classList.remove('visible');
-  audio.pause();
-  audio.currentTime = 0;
-
-  // Hide replay button
-  replayBtn.setAttribute('hidden', '');
-}
-
-if (replayBtn) {
-  replayBtn.addEventListener('click', resetExperience);
-}
-*/

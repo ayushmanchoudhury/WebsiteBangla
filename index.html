@@ -6,24 +6,21 @@
   <title>You're Invited</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-  <!-- Hidden audio element; src points to music.mp3 in the same directory -->
   <audio id="bg-music" src="music.mp3" loop preload="auto"></audio>
 
-  <!-- Mute / unmute toggle — top-right corner -->
+  <!-- Music toggle — top-right -->
   <button class="mute-btn" id="mute-btn" aria-label="Toggle music" title="Toggle music">
-    <!-- Speaker icon (unmuted) — inline SVG for zero dependencies -->
     <svg class="icon-sound" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
          stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
       <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
       <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
     </svg>
-    <!-- Muted icon — hidden initially -->
     <svg class="icon-muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
          stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
@@ -32,46 +29,90 @@
     </svg>
   </button>
 
-  <!-- ============================================================
-       SCENE — the single container that manages overall state.
-       JS adds .is-open to this element to switch between states.
-  ============================================================ -->
   <main class="scene" id="scene">
 
-    <!-- ── ENVELOPE (landing state) ────────────────────────── -->
-    <section class="envelope-wrapper" id="envelope-wrapper" aria-label="Sealed invitation envelope">
+    <!-- ══════════════════════════════════════════════
+         STATE 1 — ENVELOPE
+    ══════════════════════════════════════════════ -->
+    <section class="envelope-stage" id="envelope-stage"
+             role="button" tabindex="0" aria-label="Open your invitation">
 
-      <!-- CSS-drawn envelope body -->
-      <div class="envelope" id="envelope">
-        <!-- Envelope flap (the triangle fold at the top) -->
-        <div class="envelope__flap" id="envelope-flap"></div>
-        <!-- Decorative wax-seal in the center of the flap fold -->
-        <div class="envelope__seal">
-          <span class="envelope__seal-initial">✦</span>
-        </div>
-        <!-- Bottom body of the envelope -->
-        <div class="envelope__body"></div>
+      <!-- Gold sparkles that fly when seal pops -->
+      <div class="sparks" id="sparks" aria-hidden="true">
+        <span class="spark spark-1"></span>
+        <span class="spark spark-2"></span>
+        <span class="spark spark-3"></span>
+        <span class="spark spark-4"></span>
+        <span class="spark spark-5"></span>
+        <span class="spark spark-6"></span>
+        <span class="spark spark-7"></span>
+        <span class="spark spark-8"></span>
+        <span class="spark spark-9"></span>
+        <span class="spark spark-10"></span>
       </div>
 
-      <!-- Pulsing call-to-action label -->
+      <!-- ─── THE ENVELOPE ──────────────────────────── -->
+      <div class="env" id="env">
+
+        <!--
+          Layer order (z-index):
+            1. env__body   — the rectangular envelope shell
+            2. env__letter — the letter card, rises up through the opening
+            3. env__flap   — the triangular flap that rotates open
+        -->
+
+        <!-- 1 · Envelope body + fold-line decoration -->
+        <div class="env__body" id="env-body">
+          <!-- Golden inside lining (visible once flap lifts) -->
+          <div class="env__inside" id="env-inside"></div>
+          <!-- Bottom V-fold (purely decorative) -->
+          <div class="env__vfold" aria-hidden="true"></div>
+        </div>
+
+        <!-- 2 · Letter that rises out of the envelope -->
+        <div class="env__letter" id="env-letter" aria-hidden="true">
+          <div class="env__letter-border">
+            <div class="env__letter-inner">
+              <span class="env__letter-ornament">✦</span>
+              <p class="env__letter-sub">You Are</p>
+              <p class="env__letter-main">Cordially<br>Invited</p>
+              <span class="env__letter-ornament">✦</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 · Flap (3-D rotating triangle) + wax seal -->
+        <div class="env__flap-scene" id="env-flap-scene">
+          <div class="env__flap" id="env-flap">
+
+            <!-- Wax seal — sits at the flap's lower point -->
+            <div class="env__seal" id="env-seal">
+              <div class="env__seal-disc" id="env-seal-disc">
+                <span class="env__seal-glyph">✦</span>
+              </div>
+              <!-- Crack lines animate when seal pops -->
+              <div class="env__seal-crack env__seal-crack--a"></div>
+              <div class="env__seal-crack env__seal-crack--b"></div>
+              <div class="env__seal-crack env__seal-crack--c"></div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /env -->
+
+      <!-- Pulsing CTA below the envelope -->
       <p class="cta-label" id="cta-label">Click to open your invitation</p>
 
-    </section>
-    <!-- ── /ENVELOPE ────────────────────────────────────────── -->
+    </section><!-- /envelope-stage -->
 
 
-    <!-- ── CARD (revealed state) ────────────────────────────── -->
-    <!--
-      Structure:
-        .card-scene   — perspective container
-          .card       — the element that actually rotates on flip
-            .card__face--front  — card-front.png
-            .card__face--back   — card-back.png
-
-      JS toggles .is-flipped on .card to trigger the Y-axis flip.
-    -->
+    <!-- ══════════════════════════════════════════════
+         STATE 2 — CARD
+    ══════════════════════════════════════════════ -->
     <section class="card-scene" id="card-scene" aria-label="Invitation card" hidden>
-      <div class="card" id="card">
+      <div class="card" id="card"
+           role="button" tabindex="0" aria-label="Flip invitation card">
         <div class="card__face card__face--front">
           <img src="card-front.png" alt="Invitation front" draggable="false" />
         </div>
@@ -80,7 +121,6 @@
         </div>
       </div>
 
-      <!-- Flip affordance — tapping/clicking the card also works -->
       <button class="flip-btn" id="flip-btn" aria-label="Flip invitation card">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -90,8 +130,7 @@
         </svg>
         <span>Flip card</span>
       </button>
-    </section>
-    <!-- ── /CARD ─────────────────────────────────────────────── -->
+    </section><!-- /card-scene -->
 
   </main>
 
