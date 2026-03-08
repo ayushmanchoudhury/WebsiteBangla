@@ -1,0 +1,451 @@
+/* =============================================================
+   CSS CUSTOM PROPERTIES — tweak these to restyle the experience
+   ============================================================= */
+:root {
+  /* ---------- Palette ---------- */
+  --color-bg-start:    #1a0a2e;   /* deep indigo */
+  --color-bg-end:      #3d1a5a;   /* rich plum   */
+  --color-accent:      #c9a96e;   /* warm gold   */
+  --color-accent-light:#e8d5a3;
+  --color-envelope:    #f5ede0;   /* soft ivory  */
+  --color-envelope-shadow: #c4a882;
+  --color-seal:        #8b1a1a;   /* deep crimson */
+  --color-text:        #f5ede0;
+
+  /* ---------- Card dimensions ---------- */
+  /* Desktop base size — scales down automatically on mobile */
+  --card-width:  340px;
+  --card-height: 560px;          /* ~1.65 aspect ratio, portrait */
+  --card-radius: 16px;
+
+  /* ---------- Timing — easy to override ---------- */
+  --dur-open:   1.0s;            /* envelope opening animation  */
+  --dur-flip:   0.7s;            /* card flip animation         */
+  --ease-open:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-flip:  cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---------- Shadows ---------- */
+  --shadow-envelope: 0 20px 60px rgba(0,0,0,0.45), 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-card:     0 30px 80px rgba(0,0,0,0.55), 0 6px 20px rgba(0,0,0,0.35);
+}
+
+
+/* =============================================================
+   RESET & BASE
+   ============================================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;            /* prevent scroll during animations */
+}
+
+body {
+  /* Soft radial gradient background — premium feel */
+  background: radial-gradient(ellipse at 60% 40%, var(--color-bg-end) 0%, var(--color-bg-start) 70%);
+  font-family: 'Lato', sans-serif;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Subtle noise texture overlay via a repeating pattern */
+  position: relative;
+}
+
+/* Very subtle starfield / noise using a pseudo-element */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 60px 60px, 30px 30px;
+  background-position: 0 0, 15px 15px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+
+/* =============================================================
+   SCENE (main layout container)
+   ============================================================= */
+.scene {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+}
+
+
+/* =============================================================
+   MUTE BUTTON
+   ============================================================= */
+.mute-btn {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 100;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-accent-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  /* Hidden until the card is revealed */
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mute-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mute-btn:hover {
+  background: rgba(255,255,255,0.22);
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.mute-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Toggle which icon shows based on muted state */
+.mute-btn .icon-muted   { display: none; }
+.mute-btn.is-muted .icon-sound  { display: none; }
+.mute-btn.is-muted .icon-muted  { display: block; }
+
+
+/* =============================================================
+   ENVELOPE
+   ============================================================= */
+.envelope-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  cursor: pointer;
+
+  /* Entrance fade-in */
+  animation: fadeUp 0.9s var(--ease-open) both;
+}
+
+/* When the scene is "open", hide the envelope wrapper */
+.scene.is-open .envelope-wrapper {
+  /* Animate it out first, then hide */
+  animation: fadeDown var(--dur-open) var(--ease-open) both;
+  pointer-events: none;
+}
+
+.envelope {
+  position: relative;
+  width: min(280px, 80vw);
+  /* Height derived from envelope proportion ~1.4:1 (landscape) */
+  height: calc(min(280px, 80vw) * 0.72);
+  filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5));
+  transition: transform 0.25s var(--ease-open), filter 0.25s;
+  will-change: transform;
+}
+
+/* Hover lift effect on desktop */
+.envelope-wrapper:hover .envelope {
+  transform: translateY(-6px) scale(1.03);
+  filter: drop-shadow(0 32px 56px rgba(0,0,0,0.6));
+}
+
+/* --- Envelope body (the main rectangular part) --- */
+.envelope__body {
+  position: absolute;
+  inset: 20% 0 0 0;           /* leave room for flap above */
+  background: var(--color-envelope);
+  border-radius: 0 0 8px 8px;
+
+  /* Diagonal left and right fold lines via gradient */
+  background-image:
+    linear-gradient(135deg, var(--color-envelope-shadow) 0%, transparent 40%),
+    linear-gradient(225deg, var(--color-envelope-shadow) 0%, transparent 40%),
+    linear-gradient(to bottom, var(--color-envelope) 100%);
+}
+
+/* --- Envelope flap (triangle at top) --- */
+.envelope__flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 55%;
+
+  /* Triangle using clip-path */
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  background: linear-gradient(160deg, #e8ddd0 0%, var(--color-envelope) 60%);
+  transform-origin: top center;
+  /* We'll animate this via a class added by JS */
+  transition: transform var(--dur-open) var(--ease-open);
+  will-change: transform;
+  z-index: 2;
+}
+
+/* Flap open state — rotates backward in 3D */
+.scene.is-open .envelope__flap,
+.envelope__flap.is-opening {
+  transform: rotateX(-160deg);
+}
+
+/* --- Wax seal --- */
+.envelope__seal {
+  position: absolute;
+  top: 35%;                    /* sits at the flap-body junction */
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  z-index: 3;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #c0392b, var(--color-seal) 60%, #5a0e0e);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--dur-open) var(--ease-open), opacity var(--dur-open);
+  will-change: transform, opacity;
+}
+
+/* Seal slides away when opening */
+.scene.is-open .envelope__seal {
+  transform: translateX(-50%) translateY(-50%) scale(0.5);
+  opacity: 0;
+}
+
+.envelope__seal-initial {
+  color: var(--color-accent-light);
+  font-size: 1.4rem;
+  line-height: 1;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+
+/* =============================================================
+   CTA LABEL
+   ============================================================= */
+.cta-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  letter-spacing: 0.08em;
+  color: var(--color-accent-light);
+  text-align: center;
+  /* Breathing pulse animation */
+  animation: pulse 2.8s ease-in-out infinite;
+  /* Fade out with envelope */
+  transition: opacity var(--dur-open);
+}
+
+.scene.is-open .cta-label {
+  opacity: 0;
+}
+
+
+/* =============================================================
+   CARD SCENE & FLIP CARD
+   ============================================================= */
+
+/* card-scene wraps everything after the envelope opens */
+.card-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  /* 3D perspective for the child flip */
+  perspective: 1200px;
+
+  /* Hidden initially (via HTML hidden attr + this) */
+  opacity: 0;
+  transform: translateY(30px) scale(0.94);
+  transition:
+    opacity 0.6s var(--ease-open),
+    transform 0.6s var(--ease-open);
+  will-change: opacity, transform;
+}
+
+/* JS removes the hidden attribute then adds .card-visible to trigger entrance */
+.card-scene.card-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* --- The card element (rotates on flip) --- */
+.card {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: relative;
+  transform-style: preserve-3d;
+  /* Flip transition */
+  transition: transform var(--dur-flip) var(--ease-flip);
+  will-change: transform;
+  cursor: pointer;
+}
+
+/* When .is-flipped is added by JS, rotate 180° around Y */
+.card.is-flipped {
+  transform: rotateY(180deg);
+}
+
+/* --- Shared face styles --- */
+.card__face {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  /* Critical: hide the reverse side during rotation */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.card__face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* Prevent drag — feels more polished */
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* --- Back face: pre-rotated 180° so it faces the other way --- */
+.card__face--back {
+  transform: rotateY(180deg);
+}
+
+/* Hover shimmer on the front face */
+.card__face--front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--card-radius);
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+
+/* =============================================================
+   FLIP BUTTON
+   ============================================================= */
+.flip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.4rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(201,169,110,0.45);
+  border-radius: 100px;
+  color: var(--color-accent-light);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.flip-btn:hover {
+  background: rgba(201,169,110,0.2);
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.flip-btn:active {
+  transform: translateY(0);
+}
+
+.flip-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+
+/* =============================================================
+   KEYFRAME ANIMATIONS
+   ============================================================= */
+
+/* Fade up entrance */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade down exit (mirrors fadeUp) */
+@keyframes fadeDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+/* Breathing pulse for CTA label */
+@keyframes pulse {
+  0%, 100% { opacity: 0.8;  transform: scale(1);    }
+  50%       { opacity: 1;   transform: scale(1.04); }
+}
+
+
+/* =============================================================
+   RESPONSIVE — small screens
+   ============================================================= */
+@media (max-width: 480px) {
+  :root {
+    --card-width:  min(300px, 88vw);
+    --card-height: calc(min(300px, 88vw) * 1.65);
+  }
+
+  .envelope {
+    width: min(240px, 80vw);
+    height: calc(min(240px, 80vw) * 0.72);
+  }
+}
+
+/* Very small screens — extra safety */
+@media (max-height: 640px) {
+  :root {
+    --card-height: calc(min(300px, 88vw) * 1.5);
+  }
+
+  .card-scene {
+    gap: 1rem;
+  }
+}
