@@ -279,24 +279,6 @@ body::before {
 /* Hide the shadow strip once the flap lifts */
 .env.is-opening .env__body::after { opacity: 0; }
 
-/* ── Inside lining: deep forest green — elegant luxury reveal ── */
-.env__inside {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: var(--flap-h);
-  background: radial-gradient(
-    ellipse 80% 70% at 50% 100%,
-    #3a6648 0%,
-    #2a5038 45%,
-    #1e3a2c 100%
-  );
-  opacity: 0;
-  transition: opacity 0.6s ease 0.45s;
-  pointer-events: none;
-  z-index: 1;
-}
-.env.is-opening .env__inside { opacity: 1; }
-
 /* ── Bottom V-fold decoration ── */
 .env__vfold {
   position: absolute;
