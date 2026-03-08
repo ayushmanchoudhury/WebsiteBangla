@@ -279,19 +279,19 @@ body::before {
 /* Hide the shadow strip once the flap lifts */
 .env.is-opening .env__body::after { opacity: 0; }
 
-/* ── Golden inside lining ── */
+/* ── Inside lining: deep forest green — elegant luxury reveal ── */
 .env__inside {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: var(--flap-h);
-  background: linear-gradient(
-    165deg,
-    var(--env-inside-deep) 0%,
-    var(--env-inside) 55%,
-    #fcefc8 100%
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 100%,
+    #3a6648 0%,
+    #2a5038 45%,
+    #1e3a2c 100%
   );
   opacity: 0;
-  transition: opacity 0.5s ease 0.5s;
+  transition: opacity 0.6s ease 0.45s;
   pointer-events: none;
   z-index: 1;
 }
@@ -603,19 +603,183 @@ body::before {
   -webkit-backface-visibility: hidden;
   box-shadow: var(--shadow-card);
 }
-.card__face img {
-  width: 100%; height: 100%;
-  object-fit: cover; display: block;
-  user-select: none; -webkit-user-drag: none;
-}
 .card__face--back { transform: rotateY(180deg); }
-.card__face--front::after {
-  content: '';
+
+/* ── Shared inner layout for both faces ── */
+.cf-front, .cf-back {
   position: absolute;
   inset: 0;
   border-radius: var(--card-r);
-  background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 55%);
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+
+/* ══════════════════════════════════════════════════
+   CARD FRONT  — deep forest green + gold
+══════════════════════════════════════════════════ */
+.cf-front {
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 30%, #3a6648 0%, transparent 70%),
+    linear-gradient(160deg, #1a3326 0%, #243d2e 40%, #1e3a2c 100%);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Subtle shimmer overlay */
+.cf-front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(130deg, rgba(255,255,255,0.06) 0%, transparent 50%);
   pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ── Ornamental corner frame ── */
+.cf-frame {
+  position: absolute;
+  inset: 18px;
+  pointer-events: none;
+}
+.cf-corner {
+  position: absolute;
+  width: 22px; height: 22px;
+  border-color: var(--gold);
+  border-style: solid;
+  opacity: 0.7;
+}
+.cf-corner--tl { top: 0; left: 0;  border-width: 1.5px 0 0 1.5px; }
+.cf-corner--tr { top: 0; right: 0; border-width: 1.5px 1.5px 0 0; }
+.cf-corner--bl { bottom: 0; left: 0;  border-width: 0 0 1.5px 1.5px; }
+.cf-corner--br { bottom: 0; right: 0; border-width: 0 1.5px 1.5px 0; }
+
+/* ── Text body ── */
+.cf-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  width: 100%;
+}
+
+.cf-ornament {
+  color: var(--gold);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  line-height: 1;
+  letter-spacing: 0.1em;
+}
+.cf-ornament--trio { font-size: 0.7rem; letter-spacing: 0.5em; }
+
+.cf-overline {
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  font-size: clamp(0.6rem, 2vw, 0.75rem);
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+}
+
+.cf-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: clamp(1.6rem, 6vw, 2.6rem);
+  line-height: 1.1;
+  color: #fdf8f0;
+  letter-spacing: 0.02em;
+}
+
+.cf-rule {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0.2rem 0;
+}
+.cf-rule--cream {
+  background: linear-gradient(to right, transparent, rgba(42,80,56,0.6), transparent);
+}
+
+.cf-date, .cf-time {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(0.7rem, 2.2vw, 0.9rem);
+  color: rgba(253,240,220,0.75);
+  letter-spacing: 0.06em;
+}
+
+
+/* ══════════════════════════════════════════════════
+   CARD BACK  — cream + sage green
+══════════════════════════════════════════════════ */
+.cf-back {
+  background: #fdf8ef;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Botanical dot-pattern watermark */
+.cf-back-pattern {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(42,80,56,0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
+  pointer-events: none;
+  border-radius: inherit;
+}
+/* Central soft vignette over the pattern */
+.cf-back::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 70% at 50% 50%,
+    rgba(253,248,239,0.7) 0%, transparent 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Green corner frame on back */
+.cf-back .cf-corner {
+  border-color: #2a5038;
+  opacity: 0.45;
+}
+
+.cf-body--back {
+  position: relative;
+  z-index: 1;
+}
+
+.cf-back-label {
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  font-size: clamp(0.6rem, 2vw, 0.72rem);
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  color: #2a5038;
+}
+
+.cf-back-copy {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(0.9rem, 3vw, 1.2rem);
+  line-height: 1.55;
+  color: #3a5a42;
+  letter-spacing: 0.03em;
+}
+
+.cf-ornament--green {
+  color: #2a5038;
+  opacity: 0.7;
 }
 
 

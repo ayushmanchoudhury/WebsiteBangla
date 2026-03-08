@@ -113,12 +113,48 @@
     <section class="card-scene" id="card-scene" aria-label="Invitation card" hidden>
       <div class="card" id="card"
            role="button" tabindex="0" aria-label="Flip invitation card">
+
+        <!-- ─── FRONT FACE ────────────────────────── -->
         <div class="card__face card__face--front">
-          <img src="card-front.png" alt="Invitation front" draggable="false" />
+          <div class="cf-front">
+            <!-- outer gold frame lines -->
+            <div class="cf-frame" aria-hidden="true">
+              <span class="cf-corner cf-corner--tl"></span>
+              <span class="cf-corner cf-corner--tr"></span>
+              <span class="cf-corner cf-corner--bl"></span>
+              <span class="cf-corner cf-corner--br"></span>
+            </div>
+            <div class="cf-body">
+              <p  class="cf-ornament">✦</p>
+              <p  class="cf-overline">You Are</p>
+              <h1 class="cf-title">Cordially<br>Invited</h1>
+              <div class="cf-rule"></div>
+              <p  class="cf-date">Saturday · the First of June</p>
+              <p  class="cf-time">Six o'clock in the evening</p>
+              <p  class="cf-ornament cf-ornament--trio">✦ &nbsp; ✦ &nbsp; ✦</p>
+            </div>
+          </div>
         </div>
+
+        <!-- ─── BACK FACE ─────────────────────────── -->
         <div class="card__face card__face--back">
-          <img src="card-back.png" alt="Invitation back" draggable="false" />
+          <div class="cf-back">
+            <div class="cf-back-pattern" aria-hidden="true"></div>
+            <div class="cf-frame" aria-hidden="true">
+              <span class="cf-corner cf-corner--tl"></span>
+              <span class="cf-corner cf-corner--tr"></span>
+              <span class="cf-corner cf-corner--bl"></span>
+              <span class="cf-corner cf-corner--br"></span>
+            </div>
+            <div class="cf-body cf-body--back">
+              <p  class="cf-back-label">R.S.V.P.</p>
+              <div class="cf-rule cf-rule--cream"></div>
+              <p  class="cf-back-copy">We look forward<br>to celebrating<br>with you</p>
+              <p  class="cf-ornament cf-ornament--green">✦</p>
+            </div>
+          </div>
         </div>
+
       </div>
 
       <button class="flip-btn" id="flip-btn" aria-label="Flip invitation card">
